@@ -90,7 +90,7 @@ devMode <- FALSE # Enter development mode if true. Parameters and initial popula
 
 #*********************************************************************************************************
 
-folder_run          <- "IO_M1"
+folder_run          <- "IO_CheckRules"
 # folder_run          <- "IO_Prelim"
 
 filename_RunControl <- dir(folder_run, pattern = "^RunControl")
@@ -111,7 +111,7 @@ Global_params <- read_excel(path_RunControl, sheet="GlobalParams", skip=1)
 plan_params        <- read_excel(path_RunControl, sheet="RunControl", skip=4)    %>% filter(!is.na(runname))
 plan_returns       <- read_excel(path_RunControl, sheet="Returns",    skip=0)    %>% filter(!is.na(runname))
 plan_contributions <- read_excel(path_RunControl, sheet="Contributions", skip=0) %>% filter(!is.na(runname))
-
+plan_pop           <- read_excel(path_RunControl, sheet="Population", skip=0)    %>% filter(!is.na(runname))
 
 
 

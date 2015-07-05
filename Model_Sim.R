@@ -225,9 +225,28 @@ penSim_results <- foreach(k = 1:nsim, .packages = c("dplyr", "tidyr")) %dopar% {
       penSim$ADC[j]    <- with(penSim, max(0, NC[j] + SC[j])) 
       penSim$ADC.ER[j] <- with(penSim, ifelse(ADC[j] > EEC[j], ADC[j] - EEC[j], 0)) 
     
+      # Adjustment of EEC
+      if(!EEC_fixed) penSim$EEC[j] <- with(penSim, ifelse(ADC[j] > EEC[j], EEC[j], ADC[j])) # penSim$EEC[j] <- with(penSim, EEC[j]) else
+       
       } else {
+      # Allow for negative ADC and C  
       penSim$ADC[j]    <- with(penSim, NC[j] + SC[j]) 
-      penSim$ADC.ER[j] <- with(penSim, ADC[j] - EEC[j])  
+      
+      if(EEC_fixed) {penSim$ADC.ER[j] <- with(penSim, ADC[j] - EEC[j]) # EEC is fixed
+        # EEC is not fixed
+        # 1. when ADC > EEC. Employees pay fixed EEC and employer pays the rest
+        } else if(with(penSim, ADC[j] > EEC[j])) {
+        penSim$ADC.ER[j] <- with(penSim, ADC[j] - EEC[j]) 
+        # 2. when 0 < ADC < EEC. Employees pay the entire ADC and employer pays 0. 
+        } else if(with(penSim, ADC[j] <= EEC[j] & ADC[j] > 0)) {
+        penSim$ADC.ER[j] <- 0
+        penSim$EEC[j]    <- with(penSim, ADC[j])
+        # 3. when ADC < 0, employees pay zero and employer pays nagative value (withdraw -ADC)
+        } else if(with(penSim, ADC[j] <= 0)) {
+        penSim$ADC.ER[j] <- with(penSim, ADC[j])
+        penSim$EEC[j]    <- 0
+        }
+        
     }
     
     
@@ -235,7 +254,7 @@ penSim_results <- foreach(k = 1:nsim, .packages = c("dplyr", "tidyr")) %dopar% {
     penSim$ERC[j] <- switch(ConPolicy,
                             ADC     = with(penSim, ADC.ER[j]),                          # Full ADC
                             ADC_cap = with(penSim, min(ADC.ER[j], PR_pct_cap * PR[j])), # ADC with cap. Cap is a percent of payroll 
-                            Fixed   = with(penSim, PR_pct_fixed * PR[j])             # Fixed percent of payroll
+                            Fixed   = with(penSim, PR_pct_fixed * PR[j])                # Fixed percent of payroll
                             ) 
     
     if(j %in% plan_contributions$year) {
@@ -243,9 +262,7 @@ penSim_results <- foreach(k = 1:nsim, .packages = c("dplyr", "tidyr")) %dopar% {
     }
       
     
-    # Adjustment of EEC
-    if(EEC_fixed) penSim$EEC[j] <- with(penSim, EEC[j]) else
-                  penSim$EEC[j] <- with(penSim, ifelse(ADC[j] > EEC[j], EEC[j], ADC[j]))
+    
     
     
     

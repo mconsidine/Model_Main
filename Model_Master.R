@@ -75,6 +75,9 @@ if(devMode) source("Dev_Params.R") else {
   
 }
 
+
+
+
 #*********************************************************************************************************
 # 1.1 Importing Decrement tables and Calculating Probabilities ####
 #*********************************************************************************************************
@@ -115,6 +118,51 @@ source("Model_Decrements.R")
 # Please do NOT source the script below if external salary and benefit tables are used.   
 # source("Inputs_Salary_Benefit.R")
 source("Model_Import_Plan.R")
+
+
+## The following code is used for convevience when developing new features. 
+# Initial Active
+# WARNING: Ages and entry ages of active members must be less than retirement age. (max retirement age when multiple retirement ages is implemented) 
+range_ea  <- paramlist$range_ea
+range_age <- paramlist$range_age 
+r.max     <- paramlist$r.max
+
+#   init_actives <- rbind(c(20, 20, 1), # (entry age,  age, number)
+#                         c(20, 40, 1),
+#                         c(20, r.max - 1, 1),
+#                         c(45, 45, 1),
+#                         c(45, r.max - 1, 1),
+#                         c(50, 50, 1),
+#                         c(55, 55, 1),
+#                         c(r.max - 1, r.max - 1, 1)
+#   ) %>% as.data.frame
+
+init_actives <- plan_pop %>% filter(runname == paramlist$runname) %>% select(ea_a, age_a, number_a)
+
+
+colnames(init_actives) <- c("ea", "age", "nactives")
+init_actives <- expand.grid(ea = range_ea, age = range_age) %>% left_join(init_actives) %>% 
+  spread_("age", "nactives", fill = 0) %>% select(-ea) %>% as.matrix
+
+# Initial Retired 
+# WARNING: Ages and entry ages of retirees must be no less than retirement age. (min retirement age when multiple retirement ages is implemented)
+
+#   init_retirees <- rbind(c(20, r.max, 1),
+#                          c(20, 85, 1)
+#   ) %>% as.data.frame
+
+init_retirees <- plan_pop %>% filter(runname == paramlist$runname) %>% select(ea_r, age_r, number_r)
+
+colnames(init_retirees) <- c("ea", "age", "nretirees")                 
+init_retirees <- expand.grid(ea = range_ea, age = range_age) %>% left_join(init_retirees) %>% 
+  spread_("age", "nretirees", fill = 0) %>% select(-ea) %>% as.matrix
+
+init_pop = list(actives = init_actives, retirees = init_retirees)  
+
+rm(range_ea, range_age, r.max, init_actives, init_retirees)
+
+
+
 
 
 #*********************************************************************************************************
@@ -158,20 +206,21 @@ options(digits = 4, scipen = 6)
 # select variables to be displayed in the kable function. See below for a list of all avaiable variables and explanations.
 var.display <- c("year",  "AL",    "AA",   "FR", "NC",    "SC", "UAAL",
                  "AL.act_PR", "AL.ret_PR","AL.term_PR", 
-                 "NC.act_PR", "NC.term_PR", 
-                 "AL_PR", "NC_PR", "SC_PR", "C_PR", "ERC_PR", "PR"#
+                 # "NC.act_PR", "NC.term_PR", 
+                 "AL_PR", "NC_PR", "SC_PR", "C_PR", "ERC_PR", "PR",#
+                 "ADC", "C","ERC","EEC"
                  
                  # "ExF",   
                  # "UAAL",  "EUAAL", "LG",    "NC",    "SC",    
                  #  "ADC", "EEC", "ERC",  "C", "B",     
                  # "I.r" ,   "I.e", 
-                 # "i",    "i.r",
+                 # "i",    "i.r"
                  #, "dERC_PR"
                  # "AM", "PR",
                  # "C_ADC"
 )
 
-r1 <- penSim_results %>% filter(sim == 1, year == 1) %>% select(one_of(var.display))
+r1 <- penSim_results %>% filter(sim == 1) %>% select(one_of(var.display))
 kable(r1, digits = 3)
 
 
