@@ -143,7 +143,7 @@ init_actives_df$planname <- paramlist$planname_actives
 # colnames(init_actives) <- c("ea", "age", "nactives")
 init_actives <- expand.grid(ea = range_ea, age = range_age) %>% left_join(init_actives_df) %>% select(-planname) %>% 
   spread_("age", "nactives", fill = 0) %>% select(-ea) %>% as.matrix
-init_actives
+# init_actives
 
 
 
