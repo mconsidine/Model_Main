@@ -1,0 +1,144 @@
+---
+title: "Exploratory Analysis of Model Outputs"
+author: "Yimeng Yin"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+
+```{r mainSet options, echo=FALSE, cache=FALSE}
+
+# options(width=120)
+# knitr::opts_chunk$set(fig.width=14, fig.height=5, echo=FALSE)
+# # Note: when saving maps (ggsave), width=16, height=9 seems to get rid of white space
+
+```
+
+
+
+
+```{r Preamble, echo = FALSE, include  = FALSE}
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(magrittr) # to use %<>%
+
+rm(list = ls())
+
+run_knitr <- FALSE
+
+if(run_knitr) source("../Functions.R") else source("Functions.R")
+
+
+```
+
+
+```{r Read, echo=FALSE, include = FALSE}
+## Combine selected files into a single list.
+
+if(run_knitr) folder_run <- "../IO_CheckRules" else folder_run <- "IO_CheckRules"
+
+file_select <- dir(folder_run, pattern = ".RData")
+
+fn <- function(x) {
+       load(paste0(folder_run, "/", x))
+       outputs_list
+  }
+
+lists_all        <- alply(file_select, 1, fn)
+names(lists_all) <- laply(lists_all, function(x) x$paramlist$runname)
+
+## Combine the results into a single data frame.
+results_all <- ldply(lists_all, function(x) x$results) %>% select(-X1)
+
+```
+
+
+
+
+```{r, include = FALSE, eval= FALSE}
+
+# select variables to be displayed in the kable function. See below for a list of all avaiable variables and explanations.
+var.display <- c("year",  "AL",    "MA",    "AA",   "FR", "FR_MA",
+                 # "ExF",   
+                 "UAAL",  "EUAAL", "LG",    "NC",    "SC",    
+                 "ADC", "EEC", "ERC",  "C", "B",     
+                 # "I.r" ,   "I.e", 
+                 "i",    "i.r",
+                 "ADC_PR", "C_PR", "ERC_PR", "PR"# , "dERC_PR"
+                 # "AM", "PR",
+                 # "C_ADC"
+                 )
+
+r1 <- results_all %>% filter(sim %in% 1, runname == "R20h") %>% select(one_of(var.display)) %>% 
+  mutate(PR_growth = 100 * (PR/lag(PR) - 1) )
+kable(r1, digits = 2)
+
+r1$PR_growth
+
+```
+
+
+
+
+
+# Variables to Examine
+- **FR:** Funded ratio
+- **ERC_PR:** Employer contribution rates
+- **C_PR:** Total contribution rates
+- **B_PR:** Benefit payment rates 
+
+
+
+
+# Scenario 1 
+Single cell 20 - 60, No new entrants, deteriministic return, starting off fully funded. 
+
+```{r S1, echo = FALSE, cache = F , eval = TRUE}
+
+prefix <- "R"
+
+draw_quantiles(paste0(prefix, seq(20,60,10)), "FR", ylim = c(40, 120)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10)), "ERC_PR", ylim = c(-0.5, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10)), "C_PR", ylim = c(-0.5, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10)), "NC_PR", ylim = c(-1, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10)), "B_PR") %>% print
+
+```
+
+
+
+# Scenario 1 
+Single cell 20 - 60, with new entrants, deteriministic return, starting off fully funded. 
+
+```{r S1, echo = FALSE, cache = F , eval = TRUE}
+
+prefix <- "R"
+sufix <- "h"
+
+draw_quantiles(paste0(prefix, seq(20,60,10), sufix), "FR", ylim = c(40, 120)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10), sufix), "ERC_PR", ylim = c(-0.5, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10), sufix), "C_PR", ylim = c(-0.5, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10), sufix), "NC_PR", ylim = c(-1, 15)) %>% print
+
+draw_quantiles(paste0(prefix, seq(20,60,10), sufix), "B_PR") %>% print
+
+```
+
+
+
+
+

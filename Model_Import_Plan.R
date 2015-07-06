@@ -207,7 +207,7 @@ get_initPop <- function (.actives          = actives,
 
 
 # if(!dev_mode) 
-  init_pop <- get_initPop()
+  # init_pop <- get_initPop()
 
 # init_pop$actives
 # init_pop$retirees
@@ -223,16 +223,15 @@ get_initPop <- function (.actives          = actives,
 #*************************************************************************************************************
 #                            Infering ditribution of entrants from low yos actives                       #####                  
 #*************************************************************************************************************
- 
-  
-get_entrantsDist <- function(.actives          = actives,
+
+
+get_entrantsDist <- function(.actives          = init_actives_df,
                              .paramlist        = paramlist,
                              .Global_paramlist = Global_paramlist){
 
 #   .actives          = actives
 #   .paramlist        = paramlist
 #   .Global_paramlist = Global_paramlist  
-  
   
 assign_parmsList(.Global_paramlist, envir = environment())
 assign_parmsList(.paramlist,        envir = environment())   
@@ -255,15 +254,22 @@ if(any(ent$avg_ent < 0))  warning("Negative inferred value(s) in the following e
 
 ent %<>% mutate(avg_ent = ifelse(avg_ent < 0, 0, avg_ent))
 
-dist <- ent$avg_ent/sum(ent$avg_ent)
-dist <- lowess(dist, f= 0.1)$y
+# dist <- ent$avg_ent/sum(ent$avg_ent)
+# dist <- lowess(dist, f= 0.1)$y
+# dist
+
+dist <- lowess(ent$avg_ent, f= 0.1)$y
+dist <- dist/sum(dist)
+
+if(sum(dist) != 1) stop("Weights on ages of new entrants do not sum up to 1.")
 
 return(dist)
 }
 
+# entrants_dist <- get_entrantsDist()
 
-
-entrants_dist <- get_entrantsDist()
+entrants_dist <-  data.frame(ea = paramlist$range_ea) %>% left_join(init_actives_df) %>% mutate(dist = ifelse(is.na(nactives), 0, 1))
+entrants_dist <- entrants_dist$dist/sum(entrants_dist$dist)
 
 
 # dist1 <- get_entrantsDist(actives, "average")
@@ -271,7 +277,9 @@ entrants_dist <- get_entrantsDist()
 # 
 # data.frame(ea = paramlist$range_ea, average = dist1, underfunded = dist2) %>% gather(plan, pct, -ea) %>% 
 # ggplot(aes(x = ea, y = pct, color = plan)) + geom_point(size = 3.5) + geom_line(linetype = 3) + theme_bw()
-
+# 
+# data.frame(ea = paramlist$range_ea, average = dist1) %>% 
+#   ggplot(aes(x = ea, y = average)) + geom_point(size = 3.5) + geom_line(linetype = 3) + theme_bw()
 
 
 

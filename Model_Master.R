@@ -117,7 +117,7 @@ source("Model_Decrements.R")
 # These tables are based on PA-PSERS and some naive assumptions for imputation.
 # Please do NOT source the script below if external salary and benefit tables are used.   
 # source("Inputs_Salary_Benefit.R")
-source("Model_Import_Plan.R")
+
 
 
 ## The following code is used for convevience when developing new features. 
@@ -137,12 +137,15 @@ r.max     <- paramlist$r.max
 #                         c(r.max - 1, r.max - 1, 1)
 #   ) %>% as.data.frame
 
-init_actives <- plan_pop %>% filter(runname == paramlist$runname) %>% select(ea_a, age_a, number_a)
+init_actives_df <- plan_pop %>% filter(runname == paramlist$runname) %>% select(ea = ea_a, age = age_a, nactives = number_a)
+init_actives_df$planname <- paramlist$planname_actives  
 
-
-colnames(init_actives) <- c("ea", "age", "nactives")
-init_actives <- expand.grid(ea = range_ea, age = range_age) %>% left_join(init_actives) %>% 
+# colnames(init_actives) <- c("ea", "age", "nactives")
+init_actives <- expand.grid(ea = range_ea, age = range_age) %>% left_join(init_actives_df) %>% select(-planname) %>% 
   spread_("age", "nactives", fill = 0) %>% select(-ea) %>% as.matrix
+init_actives
+
+
 
 # Initial Retired 
 # WARNING: Ages and entry ages of retirees must be no less than retirement age. (min retirement age when multiple retirement ages is implemented)
@@ -162,7 +165,7 @@ init_pop = list(actives = init_actives, retirees = init_retirees)
 rm(range_ea, range_age, r.max, init_actives, init_retirees)
 
 
-
+source("Model_Import_Plan.R")
 
 
 #*********************************************************************************************************
@@ -204,7 +207,7 @@ source("Model_Sim.R")
 options(digits = 4, scipen = 6)
 
 # select variables to be displayed in the kable function. See below for a list of all avaiable variables and explanations.
-var.display <- c("year",  "AL",    "AA",   "FR", "NC",    "SC", "UAAL",
+var.display <- c("year",  "AL",    "AA",   "FR", "NC",    "SC", "UAAL","B",
                  "AL.act_PR", "AL.ret_PR","AL.term_PR", 
                  # "NC.act_PR", "NC.term_PR", 
                  "AL_PR", "NC_PR", "SC_PR", "C_PR", "ERC_PR", "PR",#
