@@ -230,7 +230,7 @@ outputs_list <- list(paramlist = paramlist,
                      demo_summary= pop$demo_summary,
                      
                      #liab  = if(paramlist$save.liab) liab else "Not saved",
-                     #demo  = if(paramlist$save.demo) pop else "Not saved",
+                     demo  = if(paramlist$save.demo) pop else "Not saved",
                      
                      entrant_dist = entrants_dist)
 
